@@ -1,5 +1,3 @@
-# vim: ft=python fileencoding=utf-8 sts=4 sw=4 et:
-
 # Copyright 2014-2016 Florian Bruhin (The Compiler) <mail@qutebrowser.org>
 #
 # This file is part of qutebrowser.
@@ -21,6 +19,7 @@
 
 import collections
 import functools
+import copy
 
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QSize, QRect, QTimer, QUrl
 from PyQt5.QtWidgets import (QTabWidget, QTabBar, QSizePolicy, QCommonStyle,
@@ -28,7 +27,7 @@ from PyQt5.QtWidgets import (QTabWidget, QTabBar, QSizePolicy, QCommonStyle,
 from PyQt5.QtGui import QIcon, QPalette, QColor
 
 from qutebrowser.utils import qtutils, objreg, utils, usertypes
-from qutebrowser.config import config
+from qutebrowser.config import config, configtemplate
 from qutebrowser.browser.webkit import webview
 
 
@@ -99,12 +98,12 @@ class TabWidget(QTabWidget):
 
     def update_tab_title(self, idx):
         """Update the tab text for the given tab."""
-        fields = self.get_tab_fields(idx)
-        fields['title'] = fields['title'].replace('&', '&&')
-        fields['index'] = idx + 1
+        fields = self.new_get_tab_fields(idx)
+        page_title = self.page_title(idx).replace('&', '&&')
+        fields['data'] = configtemplate.TabData(page_title, idx + 1)
 
-        fmt = config.get('tabs', 'title-format')
-        self.tabBar().setTabText(idx, fmt.format(**fields))
+        text = configtemplate.get_and_render('tabs', 'title-format', **fields)
+        self.tabBar().setTabText(idx, text)
 
     def get_tab_fields(self, idx):
         """Get the tab field data."""
@@ -123,9 +122,9 @@ class TabWidget(QTabWidget):
             fields['perc'] = ''
 
         try:
-            fields['host'] = self.tab_url(idx).host()
+            fields['url'] = self.tab_url(idx)
         except qtutils.QtValueError:
-            fields['host'] = ''
+            fields['url'] = ''
 
         y = widget.scroll_pos[1]
         if y <= 0:
@@ -136,6 +135,14 @@ class TabWidget(QTabWidget):
             scroll_pos = '{:2}%'.format(y)
 
         fields['scroll_pos'] = scroll_pos
+        return fields
+
+    def new_get_tab_fields(self, idx):
+        """Get the tab field data."""
+
+        fields = {}
+        fields['widget'] = self.widget(idx)
+        fields['widget'].index = idx
         return fields
 
     @config.change_filter('tabs', 'title-format')

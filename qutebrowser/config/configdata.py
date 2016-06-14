@@ -31,8 +31,11 @@ import sys
 import re
 import collections
 
+from PyQt5.QtCore import QUrl
+
 from qutebrowser.config import configtypes as typ
 from qutebrowser.config import sections as sect
+from qutebrowser.config.configtemplate import TabData
 from qutebrowser.config.value import SettingValue
 from qutebrowser.utils.qtutils import MAXVALS
 
@@ -625,10 +628,11 @@ def data(readonly=False):
              SettingValue(typ.Bool(), 'false'),
              "Whether to open windows instead of tabs."),
 
+            # 'perc', 'perc_raw', 'title', 'title_sep', 'index',
+            #     'id', 'scroll_pos', 'host']),
             ('title-format',
-             SettingValue(typ.FormatString(
-                 fields=['perc', 'perc_raw', 'title', 'title_sep', 'index',
-                         'id', 'scroll_pos', 'host']), '{index}: {title}'),
+             SettingValue(typ.JinjaTemplate(
+                 fields={'widget': {'load_status': {'name': ''}, 'scroll_pos': [0, 0]}, 'data': TabData(), 'url': QUrl()}), '{index}: {title}'),
              "The format to use for the tab title. The following placeholders "
              "are defined:\n\n"
              "* `{perc}`: The percentage as a string like `[10%]`.\n"
@@ -659,6 +663,8 @@ def data(readonly=False):
 
             readonly=readonly
         )),
+
+        ('templates', sect.ValueList(typ.String(), typ.String())),
 
         ('storage', sect.KeyValue(
             ('download-directory',

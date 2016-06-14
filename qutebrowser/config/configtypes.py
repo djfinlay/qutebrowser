@@ -29,6 +29,7 @@ import itertools
 import collections
 import warnings
 import datetime
+import jinja2
 
 from PyQt5.QtCore import QUrl, Qt
 from PyQt5.QtGui import QColor, QFont
@@ -1662,3 +1663,18 @@ class TimestampTemplate(BaseType):
             # thrown on invalid template string
             raise configexc.ValidationError(
                 value, "Invalid format string: {}".format(error))
+
+
+# TODO
+class JinjaTemplate(BaseType):
+    def __init__(self, fields):
+        self.fields = fields
+
+    def validate(self, value):
+        pass
+        #try:
+        #    configtemplate.render(value, **self.fields)
+        #except jinja2.exceptions.TemplateSyntaxError as e:
+        #    raise configexc.ValidationError(value, "Template syntax error: {}".format(e))
+        #except jinja2.exceptions.UndefinedError as e:
+        #    raise configexc.ValidationError(value, "Undefined error: {}".format(e))
